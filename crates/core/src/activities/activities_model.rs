@@ -153,6 +153,11 @@ pub struct Activity {
     pub created_at: DateTime<Utc>,
     #[serde(with = "timestamp_format")]
     pub updated_at: DateTime<Utc>,
+
+    /// Spending module: optional FK to events table.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
 }
 
 impl Activity {
@@ -286,6 +291,10 @@ pub struct NewActivity {
     pub source_record_id: Option<String>, // Provider's record ID
     pub source_group_id: Option<String>,  // Provider grouping key
     pub idempotency_key: Option<String>,  // Stable hash for dedupe
+
+    /// Spending module: optional FK to events table.
+    #[serde(default)]
+    pub event_id: Option<String>,
 }
 
 impl NewActivity {
@@ -408,6 +417,9 @@ pub struct ActivityUpdate {
     )]
     pub fx_rate: Option<Option<Decimal>>,
     pub metadata: Option<String>, // JSON blob for metadata (e.g., flow.is_external)
+    /// Spending module: optional FK to events table. Outer Option = "field present in patch".
+    #[serde(default)]
+    pub event_id: Option<Option<String>>,
 }
 
 impl ActivityUpdate {
@@ -1476,6 +1488,9 @@ pub struct ActivityUpsert {
     pub source_group_id: Option<String>,
     pub idempotency_key: Option<String>,
     pub import_run_id: Option<String>,
+    /// Spending module: optional FK to events table.
+    #[serde(default)]
+    pub event_id: Option<String>,
 }
 
 /// Result of a bulk upsert operation
@@ -1565,6 +1580,7 @@ impl From<ActivityImport> for NewActivity {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         }
     }
 }

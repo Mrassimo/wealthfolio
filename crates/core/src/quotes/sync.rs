@@ -780,6 +780,7 @@ where
                     source_record_id: None,
                     source_group_id: None,
                     import_run_id: None,
+                    event_id: None,
                 });
             }
         }

@@ -713,6 +713,7 @@ mod tests {
                 needs_review: false,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
+                event_id: None,
             };
             self.activities.lock().unwrap().push(activity.clone());
             Ok(activity)
@@ -740,6 +741,14 @@ mod tests {
             existing.updated_at = Utc::now();
 
             Ok(existing.clone())
+        }
+
+        async fn set_activity_event_id(
+            &self,
+            _activity_id: &str,
+            _event_id: Option<String>,
+        ) -> Result<Activity> {
+            unimplemented!()
         }
 
         async fn delete_activity(&self, _activity_id: String) -> Result<Activity> {
@@ -869,6 +878,7 @@ mod tests {
                     needs_review: false,
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
+                    event_id: None,
                 });
                 count += 1;
             }
@@ -1096,6 +1106,7 @@ mod tests {
             needs_review: false,
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            event_id: None,
         }
     }
 
@@ -1121,6 +1132,7 @@ mod tests {
             notes: None,
             fx_rate: None,
             metadata: None,
+            event_id: None,
         }
     }
 
@@ -1184,6 +1196,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         // Execute
@@ -1256,6 +1269,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         // Execute
@@ -1319,6 +1333,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         activity_service
@@ -1380,6 +1395,7 @@ mod tests {
             source_record_id: Some("provider-1".to_string()),
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let mut provider_activity_two = provider_activity_one.clone();
@@ -1439,6 +1455,7 @@ mod tests {
                 source_record_id: None,
                 source_group_id: None,
                 idempotency_key: None,
+                event_id: None,
             }],
             updates: vec![],
             delete_ids: vec![],
@@ -1510,6 +1527,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         // Execute
@@ -1586,6 +1604,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -1652,6 +1671,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -1711,6 +1731,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -1761,6 +1782,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -1819,6 +1841,7 @@ mod tests {
                 source_record_id: None,
                 source_group_id: None,
                 idempotency_key: None,
+                event_id: None,
             }],
             updates: vec![],
             delete_ids: vec![],
@@ -1895,6 +1918,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2066,6 +2090,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let error = activity_service
@@ -2133,6 +2158,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let created = activity_service
@@ -2193,6 +2219,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let error = activity_service
@@ -2248,6 +2275,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2301,6 +2329,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2354,6 +2383,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2417,6 +2447,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2484,6 +2515,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2554,6 +2586,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2622,6 +2655,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -2687,6 +2721,7 @@ mod tests {
                 source_record_id: None,
                 source_group_id: None,
                 idempotency_key: None,
+                event_id: None,
             };
 
             let result = activity_service.create_activity(new_activity).await;
@@ -2758,6 +2793,7 @@ mod tests {
                 source_record_id: None,
                 source_group_id: None,
                 idempotency_key: None,
+                event_id: None,
             }],
             updates: vec![],
             delete_ids: vec![],
@@ -4301,6 +4337,7 @@ mod tests {
                 needs_review: false,
                 created_at: earlier,
                 updated_at: earlier,
+                event_id: None,
             },
             Activity {
                 id: "transfer-out".to_string(),
@@ -4330,6 +4367,7 @@ mod tests {
                 needs_review: false,
                 created_at: earlier,
                 updated_at: earlier,
+                event_id: None,
             },
         ]);
 
@@ -4437,6 +4475,7 @@ mod tests {
                 needs_review: false,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
+                event_id: None,
             });
 
         let quote_service = Arc::new(MockQuoteService);
@@ -4641,6 +4680,7 @@ mod tests {
                 needs_review: false,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
+                event_id: None,
             });
 
         let quote_service = Arc::new(MockQuoteService);
@@ -4943,6 +4983,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -5032,6 +5073,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -5094,6 +5136,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -5156,6 +5199,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;
@@ -5730,6 +5774,7 @@ mod tests {
             source_record_id: None,
             source_group_id: None,
             idempotency_key: None,
+            event_id: None,
         };
 
         let result = activity_service.create_activity(new_activity).await;

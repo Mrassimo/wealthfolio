@@ -1,0 +1,37 @@
+{
+  "id": "australia-cgt-addon",
+  "name": "Australia CGT",
+  "version": "0.1.0",
+  "description": "Estimate Australian capital gains outcomes from Wealthfolio activity history",
+  "author": "Massimo Raso",
+  "main": "dist/addon.js",
+  "sdkVersion": "3.4.0",
+  "enabled": true,
+  "permissions": [
+    {
+      "category": "activities",
+      "functions": ["getAll"],
+      "purpose": "Read activity history to match acquisition and disposal lots"
+    },
+    {
+      "category": "accounts",
+      "functions": ["getAll"],
+      "purpose": "Read account names and currencies for tax-report grouping"
+    },
+    {
+      "category": "portfolio",
+      "functions": ["getHoldings"],
+      "purpose": "Read current holdings for unrealized capital gains preview"
+    },
+    {
+      "category": "currency",
+      "functions": ["getAll"],
+      "purpose": "Read exchange rates used for AUD conversion assumptions"
+    },
+    {
+      "category": "ui",
+      "functions": ["sidebar.addItem", "router.add"],
+      "purpose": "Add the Australia CGT navigation item and report page"
+    }
+  ]
+}

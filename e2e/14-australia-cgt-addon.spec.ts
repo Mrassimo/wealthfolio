@@ -4,6 +4,10 @@ import { fileURLToPath } from "url";
 import { BASE_URL, createAccount, loginIfNeeded } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
+test.skip(
+  process.env.WF_E2E_ENABLE_AUSTRALIA_CGT_ADDON !== "true",
+  "Australia CGT addon E2E requires the addon dev server; run pnpm test:e2e:australia-cgt-addon.",
+);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.join(__dirname, "fixtures", "australia-cgt-addon.csv");

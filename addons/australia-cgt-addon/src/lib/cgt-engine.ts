@@ -84,6 +84,7 @@ export interface ClosedLot {
   grossGain: number;
   taxableGain: number;
   discountApplied: number;
+  discountEligible: boolean;
   method: "FIFO";
 }
 
@@ -92,12 +93,24 @@ export interface IncomeYearSummary {
   proceeds: number;
   costBase: number;
   grossGain: number;
+  grossCapitalGains: number;
+  capitalLossesApplied: number;
+  discountApplied: number;
   taxableGain: number;
 }
 
 export interface CgtReport {
   closedLots: ClosedLot[];
   incomeYears: IncomeYearSummary[];
+  unmatchedSells: UnmatchedSell[];
+}
+
+export interface UnmatchedSell {
+  symbol: string;
+  account: string;
+  date: string;
+  quantity: number;
+  proceeds: number;
 }
 
 interface OpenLot {
@@ -231,6 +244,7 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
   );
   const lotsBySymbol = new Map<string, OpenLot[]>();
   const closedLots: ClosedLot[] = [];
+  const unmatchedSells: UnmatchedSell[] = [];
 
   for (const activity of sortedActivities) {
     if (activity.activityType !== "BUY" && activity.activityType !== "SELL") {
@@ -289,6 +303,7 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
         grossGain,
         taxableGain: currentLawGain.taxableGain,
         discountApplied: currentLawGain.discountApplied,
+        discountEligible: currentLawGain.discountEligible,
         method: "FIFO",
       });
 
@@ -297,6 +312,16 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
       if (lot.remainingQuantity === 0) {
         symbolLots.shift();
       }
+    }
+
+    if (quantityToSell > 0) {
+      unmatchedSells.push({
+        symbol,
+        account: activity.accountName,
+        date: isoDate(activity.date),
+        quantity: roundCurrency(quantityToSell),
+        proceeds: roundCurrency(quantityToSell * unitProceeds),
+      });
     }
   }
 
@@ -307,18 +332,52 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
       proceeds: 0,
       costBase: 0,
       grossGain: 0,
+      grossCapitalGains: 0,
+      capitalLossesApplied: 0,
+      discountApplied: 0,
       taxableGain: 0,
     };
     summary.proceeds = roundCurrency(summary.proceeds + lot.proceeds);
     summary.costBase = roundCurrency(summary.costBase + lot.costBase);
     summary.grossGain = roundCurrency(summary.grossGain + lot.grossGain);
-    summary.taxableGain = roundCurrency(summary.taxableGain + lot.taxableGain);
     summaries.set(lot.incomeYear, summary);
+  }
+
+  for (const summary of summaries.values()) {
+    const lots = closedLots.filter((lot) => lot.incomeYear === summary.incomeYear);
+    const capitalLosses = positive(
+      lots.reduce((sum, lot) => sum + (lot.grossGain < 0 ? Math.abs(lot.grossGain) : 0), 0),
+    );
+    const nonDiscountGains = positive(
+      lots.reduce(
+        (sum, lot) => sum + (lot.grossGain > 0 && !lot.discountEligible ? lot.grossGain : 0),
+        0,
+      ),
+    );
+    const discountEligibleGains = positive(
+      lots.reduce(
+        (sum, lot) => sum + (lot.grossGain > 0 && lot.discountEligible ? lot.grossGain : 0),
+        0,
+      ),
+    );
+    const lossesAppliedToNonDiscountGains = Math.min(nonDiscountGains, capitalLosses);
+    const remainingLosses = capitalLosses - lossesAppliedToNonDiscountGains;
+    const lossesAppliedToDiscountGains = Math.min(discountEligibleGains, remainingLosses);
+    const remainingNonDiscountGains = nonDiscountGains - lossesAppliedToNonDiscountGains;
+    const remainingDiscountGains = discountEligibleGains - lossesAppliedToDiscountGains;
+
+    summary.grossCapitalGains = roundCurrency(nonDiscountGains + discountEligibleGains);
+    summary.capitalLossesApplied = roundCurrency(
+      lossesAppliedToNonDiscountGains + lossesAppliedToDiscountGains,
+    );
+    summary.discountApplied = roundCurrency(remainingDiscountGains * 0.5);
+    summary.taxableGain = roundCurrency(remainingNonDiscountGains + remainingDiscountGains * 0.5);
   }
 
   return {
     closedLots,
     incomeYears: [...summaries.values()].sort((a, b) => a.incomeYear.localeCompare(b.incomeYear)),
+    unmatchedSells,
   };
 }
 
@@ -333,6 +392,7 @@ export function exportReportCsv(report: CgtReport): string {
     "proceeds",
     "costBase",
     "grossGain",
+    "capitalLossesApplied",
     "discountApplied",
     "taxableGain",
     "method",
@@ -348,6 +408,7 @@ export function exportReportCsv(report: CgtReport): string {
       lot.proceeds,
       lot.costBase,
       lot.grossGain,
+      lot.grossGain < 0 ? Math.abs(lot.grossGain) : 0,
       lot.discountApplied,
       lot.taxableGain,
       lot.method,

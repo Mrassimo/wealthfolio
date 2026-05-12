@@ -213,6 +213,98 @@ test("report accepts API timestamp date strings", () => {
   assert.equal(report.closedLots[0].taxableGain, 30);
 });
 
+test("income year summary applies capital losses before discount", () => {
+  const report = buildCgtReport([
+    {
+      id: "gain-buy",
+      activityType: "BUY",
+      date: "2024-07-01",
+      quantity: "1",
+      unitPrice: "100",
+      fee: "0",
+      amount: "100",
+      currency: "AUD",
+      assetSymbol: "GAIN.AX",
+      accountName: "Australian Taxable",
+    },
+    {
+      id: "loss-buy",
+      activityType: "BUY",
+      date: "2024-07-01",
+      quantity: "1",
+      unitPrice: "100",
+      fee: "0",
+      amount: "100",
+      currency: "AUD",
+      assetSymbol: "LOSS.AX",
+      accountName: "Australian Taxable",
+    },
+    {
+      id: "gain-sell",
+      activityType: "SELL",
+      date: "2026-05-01",
+      quantity: "1",
+      unitPrice: "200",
+      fee: "0",
+      amount: "200",
+      currency: "AUD",
+      assetSymbol: "GAIN.AX",
+      accountName: "Australian Taxable",
+    },
+    {
+      id: "loss-sell",
+      activityType: "SELL",
+      date: "2026-05-01",
+      quantity: "1",
+      unitPrice: "60",
+      fee: "0",
+      amount: "60",
+      currency: "AUD",
+      assetSymbol: "LOSS.AX",
+      accountName: "Australian Taxable",
+    },
+  ]);
+
+  assert.equal(report.incomeYears[0].grossGain, 60);
+  assert.equal(report.incomeYears[0].capitalLossesApplied, 40);
+  assert.equal(report.incomeYears[0].discountApplied, 30);
+  assert.equal(report.incomeYears[0].taxableGain, 30);
+});
+
+test("report surfaces unmatched sell quantities for review", () => {
+  const report = buildCgtReport([
+    {
+      id: "buy-one",
+      activityType: "BUY",
+      date: "2025-01-01",
+      quantity: "1",
+      unitPrice: "100",
+      fee: "0",
+      amount: "100",
+      currency: "AUD",
+      assetSymbol: "SHORT.AX",
+      accountName: "Australian Taxable",
+    },
+    {
+      id: "sell-two",
+      activityType: "SELL",
+      date: "2026-05-01",
+      quantity: "2",
+      unitPrice: "150",
+      fee: "0",
+      amount: "300",
+      currency: "AUD",
+      assetSymbol: "SHORT.AX",
+      accountName: "Australian Taxable",
+    },
+  ]);
+
+  assert.equal(report.closedLots.length, 1);
+  assert.equal(report.unmatchedSells.length, 1);
+  assert.equal(report.unmatchedSells[0].symbol, "SHORT.AX");
+  assert.equal(report.unmatchedSells[0].quantity, 1);
+});
+
 let failures = 0;
 
 for (const { name, fn } of tests) {

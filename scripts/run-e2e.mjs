@@ -11,9 +11,13 @@ const shouldUseUi = cliArgs.includes("--ui");
 const buildHealthUrl = (base, path = "/") =>
   new URL(path, `${base.replace(/\/$/, "")}/`).toString();
 
-const waitForServer = async (url, serverProcess, { timeout = 60_000, interval = 500 } = {}) => {
+const waitForServer = async (
+  url,
+  serverProcess,
+  { timeout = 60_000, interval = 500, path = "/" } = {},
+) => {
   const deadline = Date.now() + timeout;
-  const healthUrl = buildHealthUrl(url);
+  const healthUrl = buildHealthUrl(url, path);
 
   while (Date.now() < deadline) {
     if (serverProcess.exitCode !== null) {
@@ -75,7 +79,11 @@ const run = async () => {
     console.log("Waiting for frontend server...");
     await waitForServer(DEV_SERVER_URL, devServer);
     console.log("Frontend ready. Waiting for backend server...");
-    await waitForServer(BACKEND_URL, devServer, { timeout: 120_000, interval: 1000 });
+    await waitForServer(BACKEND_URL, devServer, {
+      timeout: 120_000,
+      interval: 1000,
+      path: "/api/v1/healthz",
+    });
     console.log("Backend ready. Starting tests...");
     await runPlaywrightTests(cliArgs);
   } finally {

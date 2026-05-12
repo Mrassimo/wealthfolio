@@ -121,12 +121,13 @@ const run = async () => {
       interval: 1000,
     });
 
-    const tests = spawnTestProcess("pnpm", [
-      "exec",
-      "playwright",
-      "test",
-      "e2e/14-australia-cgt-addon.spec.ts",
-    ]);
+    const tests = spawnTestProcess(
+      "pnpm",
+      ["exec", "playwright", "test", "e2e/14-australia-cgt-addon.spec.ts"],
+      {
+        WF_E2E_ENABLE_AUSTRALIA_CGT_ADDON: "true",
+      },
+    );
     await once(tests, "exit").then(([code]) => {
       if (code !== 0) {
         throw new Error(`Playwright exited with code ${code}`);

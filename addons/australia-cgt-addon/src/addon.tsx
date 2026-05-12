@@ -107,7 +107,7 @@ function AustraliaCgtPage({ ctx }: { ctx: AddonContext }) {
       {header}
       <PageContent>
         <div className="flex flex-col gap-6">
-          <section className="grid gap-3 md:grid-cols-4">
+          <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             <div className="rounded-md border p-4">
               <p className="text-muted-foreground text-xs font-medium uppercase">Closed lots</p>
               <p className="mt-2 text-2xl font-semibold">{report.closedLots.length}</p>
@@ -125,12 +125,37 @@ function AustraliaCgtPage({ ctx }: { ctx: AddonContext }) {
               </p>
             </div>
             <div className="rounded-md border p-4">
+              <p className="text-muted-foreground text-xs font-medium uppercase">Losses applied</p>
+              <p className="mt-2 text-2xl font-semibold">
+                {formatAud(
+                  report.incomeYears.reduce((sum, year) => sum + year.capitalLossesApplied, 0),
+                )}
+              </p>
+            </div>
+            <div className="rounded-md border p-4">
               <p className="text-muted-foreground text-xs font-medium uppercase">Taxable gains</p>
               <p className="mt-2 text-2xl font-semibold">
                 {formatAud(report.incomeYears.reduce((sum, year) => sum + year.taxableGain, 0))}
               </p>
             </div>
           </section>
+
+          {report.unmatchedSells.length > 0 ? (
+            <section className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+              <div className="flex items-start gap-3">
+                <Icons.AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <h2 className="font-semibold">Unmatched sells need review</h2>
+                  <p className="mt-1">
+                    {report.unmatchedSells.length} disposal
+                    {report.unmatchedSells.length === 1 ? "" : "s"} could not be fully matched to
+                    earlier buy lots. Totals exclude the unmatched quantity until the missing
+                    acquisition history is added.
+                  </p>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="rounded-md border p-4">
             <div className="mb-4 flex flex-col gap-1">
@@ -178,6 +203,8 @@ function AustraliaCgtPage({ ctx }: { ctx: AddonContext }) {
                     <th className="px-4 py-3 text-right font-medium">Proceeds</th>
                     <th className="px-4 py-3 text-right font-medium">Cost base</th>
                     <th className="px-4 py-3 text-right font-medium">Gross gain</th>
+                    <th className="px-4 py-3 text-right font-medium">Losses applied</th>
+                    <th className="px-4 py-3 text-right font-medium">Discount</th>
                     <th className="px-4 py-3 text-right font-medium">Taxable gain</th>
                   </tr>
                 </thead>
@@ -188,12 +215,16 @@ function AustraliaCgtPage({ ctx }: { ctx: AddonContext }) {
                       <td className="px-4 py-3 text-right">{formatAud(year.proceeds)}</td>
                       <td className="px-4 py-3 text-right">{formatAud(year.costBase)}</td>
                       <td className="px-4 py-3 text-right">{formatAud(year.grossGain)}</td>
+                      <td className="px-4 py-3 text-right">
+                        {formatAud(year.capitalLossesApplied)}
+                      </td>
+                      <td className="px-4 py-3 text-right">{formatAud(year.discountApplied)}</td>
                       <td className="px-4 py-3 text-right">{formatAud(year.taxableGain)}</td>
                     </tr>
                   ))}
                   {report.incomeYears.length === 0 ? (
                     <tr>
-                      <td className="text-muted-foreground px-4 py-8 text-center" colSpan={5}>
+                      <td className="text-muted-foreground px-4 py-8 text-center" colSpan={7}>
                         No matched BUY/SELL lots found yet.
                       </td>
                     </tr>
@@ -232,7 +263,15 @@ function AustraliaCgtPage({ ctx }: { ctx: AddonContext }) {
                       <td className="px-4 py-3 text-right">{lot.quantity}</td>
                       <td className="px-4 py-3">{lot.acquisitionDate}</td>
                       <td className="px-4 py-3">{lot.disposalDate}</td>
-                      <td className="px-4 py-3 text-right">{formatAud(lot.grossGain)}</td>
+                      <td
+                        className={
+                          lot.grossGain < 0
+                            ? "px-4 py-3 text-right text-red-600"
+                            : "px-4 py-3 text-right"
+                        }
+                      >
+                        {formatAud(lot.grossGain)}
+                      </td>
                       <td className="px-4 py-3 text-right">{formatAud(lot.discountApplied)}</td>
                       <td className="px-4 py-3 text-right">{formatAud(lot.taxableGain)}</td>
                     </tr>

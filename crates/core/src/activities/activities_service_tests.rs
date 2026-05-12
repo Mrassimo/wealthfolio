@@ -3923,6 +3923,83 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_preview_import_assets_classifies_physical_metal_symbols() {
+        let account_service = Arc::new(MockAccountService::new());
+        let asset_service = Arc::new(MockAssetService::new());
+        let fx_service = Arc::new(MockFxService::new());
+        let activity_repository = Arc::new(MockActivityRepository::new());
+
+        account_service.add_account(create_test_account("acc-1", "USD"));
+
+        let quote_service = Arc::new(MockQuoteService);
+        let activity_service = ActivityService::new(
+            activity_repository,
+            account_service,
+            asset_service,
+            fx_service,
+            quote_service,
+        );
+
+        let preview = activity_service
+            .preview_import_assets(vec![
+                ImportAssetCandidate {
+                    key: "xetra-gold".to_string(),
+                    account_id: "acc-1".to_string(),
+                    symbol: "4GLD.DE".to_string(),
+                    currency: Some("EUR".to_string()),
+                    instrument_type: None,
+                    quote_ccy: None,
+                    quote_mode: None,
+                    exchange_mic: None,
+                    isin: None,
+                },
+                ImportAssetCandidate {
+                    key: "wisdomtree-silver".to_string(),
+                    account_id: "acc-1".to_string(),
+                    symbol: "WSLV.DE".to_string(),
+                    currency: Some("EUR".to_string()),
+                    instrument_type: None,
+                    quote_ccy: None,
+                    quote_mode: None,
+                    exchange_mic: None,
+                    isin: None,
+                },
+                ImportAssetCandidate {
+                    key: "ishares-gold".to_string(),
+                    account_id: "acc-1".to_string(),
+                    symbol: "SGLN.L".to_string(),
+                    currency: Some("GBP".to_string()),
+                    instrument_type: None,
+                    quote_ccy: None,
+                    quote_mode: None,
+                    exchange_mic: None,
+                    isin: None,
+                },
+                ImportAssetCandidate {
+                    key: "sprott-gold".to_string(),
+                    account_id: "acc-1".to_string(),
+                    symbol: "PHYS".to_string(),
+                    currency: Some("USD".to_string()),
+                    instrument_type: None,
+                    quote_ccy: None,
+                    quote_mode: None,
+                    exchange_mic: Some("XTSE".to_string()),
+                    isin: None,
+                },
+            ])
+            .await
+            .expect("preview should succeed");
+
+        assert_eq!(preview.len(), 4);
+        for item in preview {
+            assert_eq!(item.status, ImportAssetPreviewStatus::AutoResolvedNewAsset);
+            let draft = item.draft.expect("metal candidate should include draft");
+            assert_eq!(draft.instrument_type, Some(InstrumentType::Metal));
+            assert_eq!(draft.kind, AssetKind::Investment);
+        }
+    }
+
+    #[tokio::test]
     async fn test_check_import_uses_mic_currency_as_quote_ccy_fallback() {
         let account_service = Arc::new(MockAccountService::new());
         let asset_service = Arc::new(MockAssetService::new());

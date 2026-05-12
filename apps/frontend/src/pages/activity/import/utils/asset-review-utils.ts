@@ -60,6 +60,31 @@ export function mapQuoteTypeToInstrumentType(quoteType?: string): string | undef
   }
 }
 
+function isPhysicalMetalSearchResult(result: SymbolSearchResult): boolean {
+  const symbol = result.symbol.toUpperCase();
+  const name = `${result.longName} ${result.shortName}`.toUpperCase();
+
+  if (["4GLD", "WSLV", "SGLN", "PHYS"].includes(symbol.replace(/\.(DE|L|TO)$/u, ""))) {
+    return true;
+  }
+
+  return (
+    /\bXETRA[-\s]?GOLD\b/u.test(name) ||
+    /\bPHYSICAL\s+(GOLD|SILVER)\b/u.test(name) ||
+    /\bSPROTT\s+PHYSICAL\s+(GOLD|SILVER)\b/u.test(name)
+  );
+}
+
+export function inferInstrumentTypeFromSearchResult(
+  result: SymbolSearchResult,
+): string | undefined {
+  const mappedType = mapQuoteTypeToInstrumentType(result.quoteType);
+  if (mappedType === "EQUITY" && isPhysicalMetalSearchResult(result)) {
+    return "METAL";
+  }
+  return mappedType;
+}
+
 export function buildImportAssetCandidateKey(input: {
   accountId: string;
   symbol: string;
@@ -126,7 +151,7 @@ export function buildNewAssetFromSearchResult(
   result: SymbolSearchResult,
   fallbackCurrency: string,
 ): NewAsset {
-  const instrumentType = mapQuoteTypeToInstrumentType(result.quoteType);
+  const instrumentType = inferInstrumentTypeFromSearchResult(result);
   const kind = instrumentType === "FX" ? "FX" : "INVESTMENT";
   const quoteMode = result.dataSource === "MANUAL" ? "MANUAL" : "MARKET";
 

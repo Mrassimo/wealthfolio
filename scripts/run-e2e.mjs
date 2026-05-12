@@ -5,6 +5,13 @@ import { prepE2eEnv } from "./prep-e2e.mjs";
 
 const DEV_SERVER_URL = process.env.WF_E2E_BASE_URL || "http://localhost:1420";
 const BACKEND_URL = process.env.WF_E2E_BACKEND_URL || "http://localhost:8088";
+const TEST_SERVER_ENV = {
+  WF_LISTEN_ADDR: "127.0.0.1:8088",
+  WF_CORS_ALLOW_ORIGINS: DEV_SERVER_URL,
+  WF_SECRET_KEY: "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
+  WF_AUTH_REQUIRED: "false",
+  VITE_API_TARGET: BACKEND_URL,
+};
 const cliArgs = process.argv.slice(2);
 const shouldUseUi = cliArgs.includes("--ui");
 
@@ -39,7 +46,11 @@ const waitForServer = async (
   throw new Error(`Timed out waiting for ${url}`);
 };
 
-const spawnCommand = (command, args) => spawn(command, args, { stdio: "inherit" });
+const spawnCommand = (command, args, env = {}) =>
+  spawn(command, args, {
+    stdio: "inherit",
+    env: { ...process.env, ...env },
+  });
 
 const runPlaywrightTests = (extraArgs = []) =>
   new Promise((resolve, reject) => {
@@ -57,7 +68,7 @@ const runPlaywrightTests = (extraArgs = []) =>
 const run = async () => {
   await prepE2eEnv();
 
-  const devServer = spawnCommand("pnpm", ["run", "dev:web"]);
+  const devServer = spawnCommand("pnpm", ["run", "dev:web"], TEST_SERVER_ENV);
 
   const cleanup = async () => {
     if (devServer.exitCode === null && !devServer.killed) {

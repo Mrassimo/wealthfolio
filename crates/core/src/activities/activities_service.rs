@@ -1168,12 +1168,18 @@ impl ActivityService {
             return (AssetKind::Investment, Some(InstrumentType::Option));
         }
 
-        // 4. If exchange MIC is provided, it's an equity
+        // 4. Physical metal exchange-traded products are market-quoted
+        // instruments, but should remain metals for tax reporting.
+        if Self::looks_like_physical_metal_symbol(&upper_symbol) {
+            return (AssetKind::Investment, Some(InstrumentType::Metal));
+        }
+
+        // 5. If exchange MIC is provided, it's an equity
         if exchange_mic.is_some() {
             return (AssetKind::Investment, Some(InstrumentType::Equity));
         }
 
-        // 5. Common crypto symbols heuristic (no MIC, bare symbol like BTC, ETH)
+        // 6. Common crypto symbols heuristic (no MIC, bare symbol like BTC, ETH)
         let common_crypto = [
             "BTC", "ETH", "XRP", "LTC", "BCH", "ADA", "DOT", "LINK", "XLM", "DOGE", "UNI", "SOL",
             "AVAX", "MATIC", "ATOM", "ALGO", "VET", "FIL", "TRX", "ETC", "XMR", "AAVE", "MKR",
@@ -1183,8 +1189,12 @@ impl ActivityService {
             return (AssetKind::Investment, Some(InstrumentType::Crypto));
         }
 
-        // 6. Default to equity (most common case)
+        // 7. Default to equity (most common case)
         (AssetKind::Investment, Some(InstrumentType::Equity))
+    }
+
+    fn looks_like_physical_metal_symbol(upper_symbol: &str) -> bool {
+        matches!(upper_symbol.trim(), "4GLD" | "WSLV" | "SGLN" | "PHYS")
     }
 
     fn is_asset_not_found_error(err: &Error) -> bool {

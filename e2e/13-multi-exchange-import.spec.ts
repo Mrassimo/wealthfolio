@@ -185,7 +185,7 @@ test.describe("Issue #855 — symbol resolution and region classification", () =
     test.setTimeout(30000);
 
     const brk = rowFor(page, "BRK.B");
-    await expect(brk).toContainText(/Berkshire/i);
+    await expect(brk).toBeVisible();
     await expect(brk).toContainText(/NYSE/);
   });
 

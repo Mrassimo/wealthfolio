@@ -122,6 +122,12 @@ interface OpenLot {
   unitCostBase: number;
 }
 
+interface IncomeYearAccumulator extends IncomeYearSummary {
+  capitalLosses: number;
+  nonDiscountGains: number;
+  discountEligibleGains: number;
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 function toDate(value: string | Date): Date {
@@ -325,7 +331,7 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
     }
   }
 
-  const summaries = new Map<string, IncomeYearSummary>();
+  const summaries = new Map<string, IncomeYearAccumulator>();
   for (const lot of closedLots) {
     const summary = summaries.get(lot.incomeYear) ?? {
       incomeYear: lot.incomeYear,
@@ -336,30 +342,29 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
       capitalLossesApplied: 0,
       discountApplied: 0,
       taxableGain: 0,
+      capitalLosses: 0,
+      nonDiscountGains: 0,
+      discountEligibleGains: 0,
     };
     summary.proceeds = roundCurrency(summary.proceeds + lot.proceeds);
     summary.costBase = roundCurrency(summary.costBase + lot.costBase);
     summary.grossGain = roundCurrency(summary.grossGain + lot.grossGain);
+
+    if (lot.grossGain < 0) {
+      summary.capitalLosses += Math.abs(lot.grossGain);
+    } else if (lot.discountEligible) {
+      summary.discountEligibleGains += lot.grossGain;
+    } else {
+      summary.nonDiscountGains += lot.grossGain;
+    }
+
     summaries.set(lot.incomeYear, summary);
   }
 
   for (const summary of summaries.values()) {
-    const lots = closedLots.filter((lot) => lot.incomeYear === summary.incomeYear);
-    const capitalLosses = positive(
-      lots.reduce((sum, lot) => sum + (lot.grossGain < 0 ? Math.abs(lot.grossGain) : 0), 0),
-    );
-    const nonDiscountGains = positive(
-      lots.reduce(
-        (sum, lot) => sum + (lot.grossGain > 0 && !lot.discountEligible ? lot.grossGain : 0),
-        0,
-      ),
-    );
-    const discountEligibleGains = positive(
-      lots.reduce(
-        (sum, lot) => sum + (lot.grossGain > 0 && lot.discountEligible ? lot.grossGain : 0),
-        0,
-      ),
-    );
+    const capitalLosses = positive(summary.capitalLosses);
+    const nonDiscountGains = positive(summary.nonDiscountGains);
+    const discountEligibleGains = positive(summary.discountEligibleGains);
     const lossesAppliedToNonDiscountGains = Math.min(nonDiscountGains, capitalLosses);
     const remainingLosses = capitalLosses - lossesAppliedToNonDiscountGains;
     const lossesAppliedToDiscountGains = Math.min(discountEligibleGains, remainingLosses);
@@ -374,9 +379,20 @@ export function buildCgtReport(activities: WealthfolioCgtActivity[]): CgtReport 
     summary.taxableGain = roundCurrency(remainingNonDiscountGains + remainingDiscountGains * 0.5);
   }
 
+  const incomeYears = [...summaries.values()]
+    .map(
+      ({
+        capitalLosses: _capitalLosses,
+        nonDiscountGains: _nonDiscountGains,
+        discountEligibleGains: _discountEligibleGains,
+        ...summary
+      }) => summary,
+    )
+    .sort((a, b) => a.incomeYear.localeCompare(b.incomeYear));
+
   return {
     closedLots,
-    incomeYears: [...summaries.values()].sort((a, b) => a.incomeYear.localeCompare(b.incomeYear)),
+    incomeYears,
     unmatchedSells,
   };
 }

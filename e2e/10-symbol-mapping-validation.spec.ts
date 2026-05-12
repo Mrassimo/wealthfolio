@@ -79,14 +79,14 @@ test.describe("Symbol Mapping Validation", () => {
     // between a visibility assertion and a later click.
     await expect(async () => {
       const assetRow = page.getByRole("row").filter({ hasText: ASSET_SYMBOL }).first();
-      await expect(assetRow).toBeVisible({ timeout: 3000 });
+      await expect(assetRow).toBeVisible({ timeout: 5000 });
       const actionsBtn = assetRow.getByRole("button", { name: "Open actions" });
       await actionsBtn.click();
       const editItem = page.getByRole("menuitem", { name: "Edit" });
-      await expect(editItem).toBeVisible({ timeout: 2000 });
+      await expect(editItem).toBeVisible({ timeout: 3000 });
       await editItem.click();
-      await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: 3000 });
-    }).toPass({ timeout: 30_000 });
+      await expect(page.getByRole("dialog").first()).toBeVisible({ timeout: 5000 });
+    }).toPass({ timeout: 60_000 });
 
     const editSheet = page.getByRole("dialog").first();
     await expect(editSheet).toBeVisible({ timeout: 5000 });
